@@ -38,10 +38,10 @@ log.info(f'itemcf 召回，mode: {mode}')
 
 
 def cal_sim(df):
-    user_item_ = df.groupby('user_id')['click_article_id'].agg(
+    user_item_ = df.groupby('user_id')['mrch_id'].agg(
         lambda x: list(x)).reset_index()
     user_item_dict = dict(
-        zip(user_item_['user_id'], user_item_['click_article_id']))
+        zip(user_item_['user_id'], user_item_['mrch_id']))
 
     item_cnt = defaultdict(int)
     sim_dict = {}
@@ -100,7 +100,7 @@ def recall(df_query, item_sim, user_item_dict, worker_id):
         item_sim_scores = [item[1] for item in sim_items]
 
         df_temp = pd.DataFrame()
-        df_temp['article_id'] = item_ids
+        df_temp['mrch_id'] = item_ids
         df_temp['sim_score'] = item_sim_scores
         df_temp['user_id'] = user_id
 
@@ -108,11 +108,11 @@ def recall(df_query, item_sim, user_item_dict, worker_id):
             df_temp['label'] = np.nan
         else:
             df_temp['label'] = 0
-            df_temp.loc[df_temp['article_id'] == item_id, 'label'] = 1
+            df_temp.loc[df_temp['mrch_id'] == item_id, 'label'] = 1
 
-        df_temp = df_temp[['user_id', 'article_id', 'sim_score', 'label']]
+        df_temp = df_temp[['user_id', 'mrch_id', 'sim_score', 'label']]
         df_temp['user_id'] = df_temp['user_id'].astype('int')
-        df_temp['article_id'] = df_temp['article_id'].astype('int')
+        df_temp['mrch_id'] = df_temp['mrch_id'].astype('int')
 
         data_list.append(df_temp)
 
@@ -180,7 +180,7 @@ if __name__ == '__main__':
     if mode == 'valid':
         log.info(f'计算召回指标')
 
-        total = df_query[df_query['click_article_id'] != -1].user_id.nunique()
+        total = df_query[df_query['mrch_id'] != -1].user_id.nunique()
 
         hitrate_5, mrr_5, hitrate_10, mrr_10, hitrate_20, mrr_20, hitrate_40, mrr_40, hitrate_50, mrr_50 = evaluate(
             df_data[df_data['label'].notnull()], total)
