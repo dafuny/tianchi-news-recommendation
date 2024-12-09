@@ -100,11 +100,11 @@ def evaluate(df, total):
 
     for _, g in tqdm(gg):
         try:
-            item_id = g[g['label'] == 1]['article_id'].values[0]
+            item_id = g[g['label'] == 1]['mrch_id'].values[0]
         except Exception as e:
             continue
 
-        predictions = g['article_id'].values.tolist()
+        predictions = g['mrch_id'].values.tolist()
 
         rank = 0
         while predictions[rank] != item_id:
@@ -149,16 +149,16 @@ def evaluate(df, total):
 
 
 @multitasking.task
-def gen_sub_multitasking(test_users, prediction, all_articles, worker_id):
+def gen_sub_multitasking(test_users, prediction, all_mrchs, worker_id):
     lines = []
 
     for test_user in tqdm(test_users):
         g = prediction[prediction['user_id'] == test_user]
         g = g.head(5)
-        items = g['article_id'].values.tolist()
+        items = g['mrch_id'].values.tolist()
 
         if len(set(items)) < 5:
-            buchong = all_articles - set(items)
+            buchong = all_mrchs - set(items)
             buchong = sample(buchong, 5 - len(set(items)))
             items += buchong
 
@@ -177,7 +177,7 @@ def gen_sub(prediction):
                            inplace=True,
                            ascending=[True, False])
 
-    all_articles = set(prediction['article_id'].values)
+    all_mrchs = set(prediction['mrch_id'].values)
 
     sub_sample = pd.read_csv('../tcdata/testB_click_log_Test_B.csv')
     test_users = sub_sample.user_id.unique()
@@ -193,7 +193,7 @@ def gen_sub(prediction):
 
     for i in range(0, total, n_len):
         part_users = test_users[i:i + n_len]
-        gen_sub_multitasking(part_users, prediction, all_articles, i)
+        gen_sub_multitasking(part_users, prediction, all_mrchs, i)
 
     multitasking.wait_for_tasks()
 
@@ -206,7 +206,7 @@ def gen_sub(prediction):
 
     df_sub = pd.DataFrame(lines)
     df_sub.columns = [
-        'user_id', 'article_1', 'article_2', 'article_3', 'article_4',
-        'article_5'
+        'user_id', 'mrch_1', 'mrch_2', 'mrch_3', 'mrch_4',
+        'mrch_5'
     ]
     return df_sub
