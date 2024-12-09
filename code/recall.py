@@ -62,13 +62,13 @@ def recall_result_sim(df1_, df2_):
     df1 = df1_.copy()
     df2 = df2_.copy()
 
-    user_item_ = df1.groupby('user_id')['article_id'].agg(set).reset_index()
+    user_item_ = df1.groupby('user_id')['mrch_id'].agg(set).reset_index()
     user_item_dict1 = dict(zip(user_item_['user_id'],
-                               user_item_['article_id']))
+                               user_item_['mrch_id']))
 
-    user_item_ = df2.groupby('user_id')['article_id'].agg(set).reset_index()
+    user_item_ = df2.groupby('user_id')['mrch_id'].agg(set).reset_index()
     user_item_dict2 = dict(zip(user_item_['user_id'],
-                               user_item_['article_id']))
+                               user_item_['mrch_id']))
 
     cnt = 0
     hit_cnt = 0
@@ -125,13 +125,13 @@ if __name__ == '__main__':
 
     # 合并召回结果
     recall_final = pd.concat(recall_list, sort=False)
-    recall_score = recall_final[['user_id', 'article_id',
+    recall_score = recall_final[['user_id', 'mrch_id',
                                  'sim_score']].groupby([
-                                     'user_id', 'article_id'
+                                     'user_id', 'mrch_id'
                                  ])['sim_score'].sum().reset_index()
 
-    recall_final = recall_final[['user_id', 'article_id', 'label'
-                                 ]].drop_duplicates(['user_id', 'article_id'])
+    recall_final = recall_final[['user_id', 'mrch_id', 'label'
+                                 ]].drop_duplicates(['user_id', 'mrch_id'])
     recall_final = recall_final.merge(recall_score, how='left')
 
     recall_final.sort_values(['user_id', 'sim_score'],
@@ -164,7 +164,7 @@ if __name__ == '__main__':
 
     # 计算相关指标
     if mode == 'valid':
-        total = df_query[df_query['click_article_id'] != -1].user_id.nunique()
+        total = df_query[df_query['mrch_id'] != -1].user_id.nunique()
         hitrate_5, mrr_5, hitrate_10, mrr_10, hitrate_20, mrr_20, hitrate_40, mrr_40, hitrate_50, mrr_50 = evaluate(
             df_useful_recall[df_useful_recall['label'].notnull()], total)
         hitrate_5, mrr_5, hitrate_10, mrr_10, hitrate_20, mrr_20, hitrate_40, mrr_40, hitrate_50, mrr_50
