@@ -89,7 +89,7 @@ def data_online(df_train_click, df_test_click):
         test_query_list.append([user, -1])
 
     df_test_query = pd.DataFrame(test_query_list,
-                                 columns=['user_id', 'click_article_id'])
+                                 columns=['user_id', 'mrch_id'])
 
     df_query = df_test_query
     df_click = pd.concat([df_train_click, df_test_click],
