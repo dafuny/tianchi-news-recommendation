@@ -61,7 +61,7 @@ def train_model(df_feature, df_query):
                                metric=None)
 
     oof = []
-    prediction = df_test[['user_id', 'article_id']]
+    prediction = df_test[['user_id', 'mrch_id']]
     prediction['pred'] = 0
     df_importance_list = []
 
@@ -90,7 +90,7 @@ def train_model(df_feature, df_query):
 
         pred_val = lgb_model.predict_proba(
             X_val, num_iteration=lgb_model.best_iteration_)[:, 1]
-        df_oof = df_train.iloc[val_idx][['user_id', 'article_id', ycol]].copy()
+        df_oof = df_train.iloc[val_idx][['user_id', 'mrch_id', ycol]].copy()
         df_oof['pred'] = pred_val
         oof.append(df_oof)
 
@@ -124,7 +124,7 @@ def train_model(df_feature, df_query):
     log.debug(f'df_oof.head: {df_oof.head()}')
 
     # 计算相关指标
-    total = df_query[df_query['click_article_id'] != -1].user_id.nunique()
+    total = df_query[df_query['mrch_id'] != -1].user_id.nunique()
     hitrate_5, mrr_5, hitrate_10, mrr_10, hitrate_20, mrr_20, hitrate_40, mrr_40, hitrate_50, mrr_50 = evaluate(
         df_oof, total)
     log.debug(
@@ -146,7 +146,7 @@ def online_predict(df_test):
             df_test.columns))
     feature_names.sort()
 
-    prediction = df_test[['user_id', 'article_id']]
+    prediction = df_test[['user_id', 'mrch_id']]
     prediction['pred'] = 0
 
     for fold_id in tqdm(range(5)):
