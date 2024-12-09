@@ -72,16 +72,16 @@ def word2vec(df_, f1, f2, model_path):
                          iter=1)
         model.save(f'{model_path}/w2v.m')
 
-    article_vec_map = {}
+    mrch_vec_map = {}
     for word in set(words):
         if word in model:
-            article_vec_map[int(word)] = model[word]
+            mrch_vec_map[int(word)] = model[word]
 
-    return article_vec_map
+    return mrch_vec_map
 
 
 @multitasking.task
-def recall(df_query, article_vec_map, article_index, user_item_dict,
+def recall(df_query, mrch_vec_map, mrch_index, user_item_dict,
            worker_id):
     data_list = []
 
@@ -92,10 +92,10 @@ def recall(df_query, article_vec_map, article_index, user_item_dict,
         interacted_items = interacted_items[-1:]
 
         for item in interacted_items:
-            article_vec = article_vec_map[item]
+            mrch_vec = mrch_vec_map[item]
 
-            item_ids, distances = article_index.get_nns_by_vector(
-                article_vec, 100, include_distances=True)
+            item_ids, distances = mrch_index.get_nns_by_vector(
+                mrch_vec, 100, include_distances=True)
             sim_scores = [2 - distance for distance in distances]
 
             for relate_item, wij in zip(item_ids, sim_scores):
@@ -108,7 +108,7 @@ def recall(df_query, article_vec_map, article_index, user_item_dict,
         item_sim_scores = [item[1] for item in sim_items]
 
         df_temp = pd.DataFrame()
-        df_temp['article_id'] = item_ids
+        df_temp['mrch_id'] = item_ids
         df_temp['sim_score'] = item_sim_scores
         df_temp['user_id'] = user_id
 
@@ -116,11 +116,11 @@ def recall(df_query, article_vec_map, article_index, user_item_dict,
             df_temp['label'] = np.nan
         else:
             df_temp['label'] = 0
-            df_temp.loc[df_temp['article_id'] == item_id, 'label'] = 1
+            df_temp.loc[df_temp['mrch_id'] == item_id, 'label'] = 1
 
-        df_temp = df_temp[['user_id', 'article_id', 'sim_score', 'label']]
+        df_temp = df_temp[['user_id', 'mrch_id', 'sim_score', 'label']]
         df_temp['user_id'] = df_temp['user_id'].astype('int')
-        df_temp['article_id'] = df_temp['article_id'].astype('int')
+        df_temp['mrch_id'] = df_temp['mrch_id'].astype('int')
 
         data_list.append(df_temp)
 
@@ -138,7 +138,7 @@ if __name__ == '__main__':
         os.makedirs('../user_data/data/offline', exist_ok=True)
         os.makedirs('../user_data/model/offline', exist_ok=True)
 
-        w2v_file = '../user_data/data/offline/article_w2v.pkl'
+        w2v_file = '../user_data/data/offline/mrch_w2v.pkl'
         model_path = '../user_data/model/offline'
     else:
         df_click = pd.read_pickle('../user_data/data/online/click.pkl')
@@ -147,31 +147,31 @@ if __name__ == '__main__':
         os.makedirs('../user_data/data/online', exist_ok=True)
         os.makedirs('../user_data/model/online', exist_ok=True)
 
-        w2v_file = '../user_data/data/online/article_w2v.pkl'
+        w2v_file = '../user_data/data/online/mrch_w2v.pkl'
         model_path = '../user_data/model/online'
 
     log.debug(f'df_click shape: {df_click.shape}')
     log.debug(f'{df_click.head()}')
 
-    article_vec_map = word2vec(df_click, 'user_id', 'click_article_id',
+    mrch_vec_map = word2vec(df_click, 'user_id', 'mrch_id',
                                model_path)
     f = open(w2v_file, 'wb')
-    pickle.dump(article_vec_map, f)
+    pickle.dump(mrch_vec_map, f)
     f.close()
 
     # 将 embedding 建立索引
-    article_index = AnnoyIndex(256, 'angular')
-    article_index.set_seed(2020)
+    mrch_index = AnnoyIndex(256, 'angular')
+    mrch_index.set_seed(2020)
 
-    for article_id, emb in tqdm(article_vec_map.items()):
-        article_index.add_item(article_id, emb)
+    for mrch_id, emb in tqdm(mrch_vec_map.items()):
+        mrch_index.add_item(mrch_id, emb)
 
-    article_index.build(100)
+    mrch_index.build(100)
 
-    user_item_ = df_click.groupby('user_id')['click_article_id'].agg(
+    user_item_ = df_click.groupby('user_id')['mrch_id'].agg(
         lambda x: list(x)).reset_index()
     user_item_dict = dict(
-        zip(user_item_['user_id'], user_item_['click_article_id']))
+        zip(user_item_['user_id'], user_item_['mrch_id']))
 
     # 召回
     n_split = max_threads
@@ -188,7 +188,7 @@ if __name__ == '__main__':
     for i in range(0, total, n_len):
         part_users = all_users[i:i + n_len]
         df_temp = df_query[df_query['user_id'].isin(part_users)]
-        recall(df_temp, article_vec_map, article_index, user_item_dict, i)
+        recall(df_temp, mrch_vec_map, mrch_index, user_item_dict, i)
 
     multitasking.wait_for_tasks()
     log.info('合并任务')
@@ -209,7 +209,7 @@ if __name__ == '__main__':
     if mode == 'valid':
         log.info(f'计算召回指标')
 
-        total = df_query[df_query['click_article_id'] != -1].user_id.nunique()
+        total = df_query[df_query['mrch_id'] != -1].user_id.nunique()
 
         hitrate_5, mrr_5, hitrate_10, mrr_10, hitrate_20, mrr_20, hitrate_40, mrr_40, hitrate_50, mrr_50 = evaluate(
             df_data[df_data['label'].notnull()], total)
