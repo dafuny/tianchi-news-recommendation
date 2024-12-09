@@ -27,7 +27,8 @@ log.info(f'数据处理，mode: {mode}')
 
 
 def data_offline(df_train_click, df_test_click):
-    train_users = df_train_click['user_id'].values.tolist()
+    # train_users = df_train_click['user_id'].values.tolist()
+    train_users = df_train_click['user_id'].unique()
     # 随机采样出一部分样本
     val_users = sample(train_users, 50000)
     log.debug(f'val_users num: {len(set(val_users))}')
@@ -37,11 +38,12 @@ def data_offline(df_train_click, df_test_click):
     valid_query_list = []
 
     groups = df_train_click.groupby(['user_id'])
+    #此时需检查train_click中是否有只点击过一次的情况
     for user_id, g in tqdm(groups):
         if user_id in val_users:
             valid_query = g.tail(1)
             valid_query_list.append(
-                valid_query[['user_id', 'click_article_id']])
+                valid_query[['user_id', 'mrch_id']])
 
             train_click = g.head(g.shape[0] - 1)
             click_list.append(train_click)
@@ -58,14 +60,14 @@ def data_offline(df_train_click, df_test_click):
         test_query_list.append([user, -1])
 
     df_test_query = pd.DataFrame(test_query_list,
-                                 columns=['user_id', 'click_article_id'])
+                                 columns=['user_id', 'mrch_id'])
 
     df_query = pd.concat([df_valid_query, df_test_query],
                          sort=False).reset_index(drop=True)
     df_click = pd.concat([df_train_click, df_test_click],
                          sort=False).reset_index(drop=True)
     df_click = df_click.sort_values(['user_id',
-                                     'click_timestamp']).reset_index(drop=True)
+                                     'action_time']).reset_index(drop=True)
 
     log.debug(
         f'df_query shape: {df_query.shape}, df_click shape: {df_click.shape}')
