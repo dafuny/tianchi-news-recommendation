@@ -35,8 +35,8 @@ log.info(f'lightgbm 排序，mode: {mode}')
 
 
 def train_model(df_feature, df_query):
-    df_train = df_feature[df_feature['label'].notnull()]
-    df_test = df_feature[df_feature['label'].isnull()]
+    df_train = df_feature[df_feature['label'].notnull()   #有标签值的作为训练集
+    df_test = df_feature[df_feature['label'].isnull()]     #无标签值的作为测试集
 
     del df_feature
     gc.collect()
@@ -44,7 +44,7 @@ def train_model(df_feature, df_query):
     ycol = 'label'
     feature_names = list(
         filter(
-            lambda x: x not in [ycol, 'created_at_datetime', 'click_datetime'],
+            lambda x: x not in [ycol, 'created_at_datetime', 'click_datetime'],  #排除非数值型特征
             df_train.columns))
     feature_names.sort()
 
