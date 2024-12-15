@@ -110,8 +110,8 @@ def data_online(df_train_click, df_test_click):
 
 
 if __name__ == '__main__':
-    df_train_click = pd.read_csv('../tcdata/train_click_log.csv')
-    df_test_click = pd.read_csv('../tcdata/testB_click_log_Test_B.csv')
+    df_train_click = pd.read_csv('../tcdata/train_data.csv')
+    df_test_click = pd.read_csv('../tcdata/test_data.csv')
 
     log.debug(
         f'df_train_click shape: {df_train_click.shape}, df_test_click shape: {df_test_click.shape}'
