@@ -89,7 +89,7 @@ def recall(df_query, mrch_vec_map, mrch_index, user_item_dict,
         rank = defaultdict(int)
 
         interacted_items = user_item_dict[user_id]
-        interacted_items = interacted_items[-1:]
+        # interacted_items = interacted_items[-1:] #所有的交互商户都有意义
 
         for item in interacted_items:
             mrch_vec = mrch_vec_map[item]
@@ -99,9 +99,9 @@ def recall(df_query, mrch_vec_map, mrch_index, user_item_dict,
             sim_scores = [2 - distance for distance in distances]
 
             for relate_item, wij in zip(item_ids, sim_scores):
-                if relate_item not in interacted_items:
-                    rank.setdefault(relate_item, 0)
-                    rank[relate_item] += wij
+                # if relate_item not in interacted_items:
+                rank.setdefault(relate_item, 0)   #保留对已推荐项目的推荐
+                rank[relate_item] += wij
 
         sim_items = sorted(rank.items(), key=lambda d: d[1], reverse=True)[:50]
         item_ids = [item[0] for item in sim_items]
