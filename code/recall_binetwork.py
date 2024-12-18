@@ -74,7 +74,7 @@ def recall(df_query, item_sim, user_item_dict, worker_id):
             continue
 
         interacted_items = user_item_dict[user_id]
-        interacted_items = interacted_items[::-1][:1]
+        # interacted_items = interacted_items[::-1][:1] #所有交互的商户都有意义
 
         for _, item in enumerate(interacted_items):
             for relate_item, wij in sorted(item_sim[item].items(),
