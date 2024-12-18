@@ -57,13 +57,15 @@ def cal_sim(df):
 
                 sim_dict[item].setdefault(relate_item, 0)
 
-                # 位置信息权重
-                # 考虑文章的正向顺序点击和反向顺序点击
-                loc_alpha = 1.0 if loc2 > loc1 else 0.7
-                loc_weight = loc_alpha * (0.9**(np.abs(loc2 - loc1) - 1))
+                # # 位置信息权重
+                # # 考虑文章的正向顺序点击和反向顺序点击
+                # loc_alpha = 1.0 if loc2 > loc1 else 0.7
+                # loc_weight = loc_alpha * (0.9**(np.abs(loc2 - loc1) - 1))
 
-                sim_dict[item][relate_item] += loc_weight  / \
-                    math.log(1 + len(items))
+                # sim_dict[item][relate_item] += loc_weight  / \
+                #     math.log(1 + len(items))
+                sim_dict[item][relate_item] += 1 / math.log(1 + len(items))
+
 
     for item, relate_items in tqdm(sim_dict.items()):
         for relate_item, cij in relate_items.items():
@@ -84,15 +86,16 @@ def recall(df_query, item_sim, user_item_dict, worker_id):
             continue
 
         interacted_items = user_item_dict[user_id]
-        interacted_items = interacted_items[::-1][:2]
+        # interacted_items = interacted_items[::-1][:2]  #所有交互的商户都有意义
 
         for loc, item in enumerate(interacted_items):
             for relate_item, wij in sorted(item_sim[item].items(),
                                            key=lambda d: d[1],
                                            reverse=True)[0:200]:
-                if relate_item not in interacted_items:
-                    rank.setdefault(relate_item, 0)
-                    rank[relate_item] += wij * (0.7**loc)
+                # if relate_item not in interacted_items:
+                rank.setdefault(relate_item, 0)   #保留对已交互项目的推荐！
+                    # rank[relate_item] += wij * (0.7**loc)
+                rank[relate_item] += wij
 
         sim_items = sorted(rank.items(), key=lambda d: d[1],
                            reverse=True)[:100]
