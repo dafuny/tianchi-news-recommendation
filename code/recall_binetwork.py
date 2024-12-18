@@ -80,9 +80,9 @@ def recall(df_query, item_sim, user_item_dict, worker_id):
             for relate_item, wij in sorted(item_sim[item].items(),
                                            key=lambda d: d[1],
                                            reverse=True)[0:100]:
-                if relate_item not in interacted_items:
-                    rank.setdefault(relate_item, 0)
-                    rank[relate_item] += wij
+                # if relate_item not in interacted_items: #保留对已点击用户的推荐
+                rank.setdefault(relate_item, 0)
+                rank[relate_item] += wij
 
         sim_items = sorted(rank.items(), key=lambda d: d[1], reverse=True)[:50]
         item_ids = [item[0] for item in sim_items]
